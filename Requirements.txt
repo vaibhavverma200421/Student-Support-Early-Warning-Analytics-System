@@ -1,0 +1,16 @@
+
+All the Required libraries of Python for this ---> Student early warning and risk prediction system <---
+
+1. pandas as pd
+
+2. numpy as np
+
+3. matplotlib pyplot as plt
+
+4. sns as seaborn
+
+5. scikitlearn AS : 
+
+from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
