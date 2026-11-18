@@ -1,39 +1,26 @@
-# Student Support & Early-Warning Analytics System
+# Student Risk Backend (Step 1)
 
-## Overview
-A predictive analytics project that identifies students who are academically "at risk" (likely to Fail or Withdraw) using engagement, demographic, and academic performance data. Built to help instructors intervene early and provide timely support.
+Folder me ye 7 files ek saath rakho: main.py, database.py, load_data.py, requirements.txt,
+risk_model.pkl, model_columns.pkl, at_risk_students.csv
 
-## Dataset
-- **Source:** UCI Open University Learning Analytics Dataset (OULAD)
-- **Tables used:** studentInfo, studentRegistration, studentAssessment, studentVle, assessments, courses
+## Run
+1. pip install -r requirements.txt
+2. python load_data.py            (CSV ko database me daalta hai)
+3. uvicorn main:app --reload
+4. Browser: http://127.0.0.1:8000/docs
 
-## Approach
-1. Merged multiple raw tables into a single student-level dataset
-2. Cleaned data — handled duplicates and missing values
-3. Engineered a target variable `at_risk` (1 = Fail/Withdrawn, 0 = Pass/Top Performer)
-4. Encoded categorical features (gender, region, education level, etc.) using one-hot encoding
-5. Split data into 80% training / 20% testing
-6. Trained a **Random Forest Classifier**
-7. Evaluated performance using accuracy, precision, recall, and confusion matrix
+## PostgreSQL use karna ho (optional, default SQLite hai)
+pgAdmin me ek database `student_risk` banao, phir terminal me (run se pehle):
+  Windows PowerShell:  $env:DATABASE_URL="postgresql+psycopg://postgres:YOUR_PASSWORD@localhost:5432/student_risk"
+Phir step 2 aur 3 dobara chalao.
 
-## Results
-- **Accuracy:** 90.4%
-- **Precision (at-risk class):** 0.95
-- **Recall (at-risk class):** 0.87
-
-## Tech Stack
-- Python
-- pandas, numpy
-- scikit-learn
-- Jupyter Notebook
-
-## How to Run
-1. Clone this repository
-2. Install dependencies: `pip install -r requirements.txt`
-3. Open `student_risk_prediction_model.ipynb` in Jupyter
-4. Run all cells
-
-## Future Scope
-- Deploy as an interactive dashboard for instructors
-- Add live prediction for new/incoming student data
-- Expand model to include attendance and LMS interaction trends
+## Endpoints
+GET  /                      health
+POST /predict               risk + reasons for a student's details
+GET  /students/summary      totals + at-risk by region/gender/age
+GET  /students/at-risk      list (filters: region, gender, age_band, min_probability, search; sort, limit, offset)
+GET  /students/{id}         student + reasons + intervention history
+POST /interventions         mentor action log
+GET  /interventions         list (filter: id_student, status)
+PATCH /interventions/{id}   update status / outcome / notes
+GET  /impact                coverage + improvement rate

@@ -1,0 +1,36 @@
+HIGH RISK STUDENT
+------------------
+{
+  "gender": "F",
+  "region": "Wales",
+  "highest_education": "Lower Than A Level",
+  "imd_band": "0-10%",
+  "age_band": "0-35",
+  "disability": "Y",
+  "num_of_prev_attempts": 1,
+  "studied_credits": 120,
+  "module_presentation_length": 240,
+  "total_clicks": 40,
+  "active_days": 3,
+  "avg_score": 0,
+  "total_assessments": 0
+}
+
+
+LOW RISK STUDENT
+------------------
+{
+  "gender": "M",
+  "region": "Scotland",
+  "highest_education": "HE Qualification",
+  "imd_band": "20-30%",
+  "age_band": "35-55",
+  "disability": "N",
+  "num_of_prev_attempts": 0,
+  "studied_credits": 60,
+  "module_presentation_length": 240,
+  "total_clicks": 1400,
+  "active_days": 80,
+  "avg_score": 72,
+  "total_assessments": 5
+}

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Student Risk Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root{
+  --bg:#f4f6f8; --card:#ffffff; --text:#1a1d23; --muted:#6b7280;
+  --border:#e5e7eb; --accent:#4f46e5; --danger:#dc2626; --safe:#16a34a;
+  --warn:#d97706;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1115; --card:#181b21; --text:#e8eaed; --muted:#9aa3af; --border:#2a2e37;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1115; --card:#181b21; --text:#e8eaed; --muted:#9aa3af; --border:#2a2e37;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  padding:24px; min-height:100%;
+}
+header{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px;}
+h1{font-size:22px; margin:0;}
+.sub{color:var(--muted); font-size:13px; margin-top:4px;}
+.upload-box{
+  background:var(--card); border:1px dashed var(--border); border-radius:12px;
+  padding:18px; text-align:center; color:var(--muted); margin-bottom:20px;
+}
+.upload-box input{margin-top:10px;}
+.hidden{display:none !important;}
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:20px;}
+.kpi{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px;}
+.kpi .num{font-size:26px; font-weight:700;}
+.kpi .label{color:var(--muted); font-size:12px; margin-top:4px;}
+.charts{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-bottom:20px;}
+.chart-card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px;}
+.chart-card h3{margin:0 0 10px 0; font-size:14px; color:var(--muted); font-weight:600;}
+.chart-box{position:relative; height:220px; width:100%;}
+.controls{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;}
+.controls input, .controls select{
+  padding:8px 10px; border-radius:8px; border:1px solid var(--border);
+  background:var(--card); color:var(--text); font-size:13px;
+}
+.table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:12px; background:var(--card);}
+table{border-collapse:collapse; width:100%; min-width:720px; font-size:13px;}
+th,td{padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap;}
+th{cursor:pointer; color:var(--muted); font-weight:600; position:sticky; top:0; background:var(--card);}
+th:hover{color:var(--text);}
+.badge{padding:3px 8px; border-radius:999px; font-size:12px; font-weight:600;}
+.badge.risk{background:rgba(220,38,38,.12); color:var(--danger);}
+.badge.safe{background:rgba(22,163,74,.12); color:var(--safe);}
+footer{color:var(--muted); font-size:12px; text-align:center; margin-top:20px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Student Risk Dashboard</h1>
+    <div class="sub">Mentor-facing view of model predictions</div>
+  </div>
+</header>
+
+<div id="uploadBox" class="upload-box">
+  Upload <code>at_risk_students.csv</code> (exported from the training notebook)
+  <br>
+  <input type="file" id="fileInput" accept=".csv">
+</div>
+
+<div id="dashboard" class="hidden">
+  <div class="kpis">
+    <div class="kpi"><div class="num" id="kpiTotal">0</div><div class="label">Total Students</div></div>
+    <div class="kpi"><div class="num" id="kpiRisk" style="color:var(--danger)">0</div><div class="label">At-Risk Students</div></div>
+    <div class="kpi"><div class="num" id="kpiSafe" style="color:var(--safe)">0</div><div class="label">Low-Risk Students</div></div>
+    <div class="kpi"><div class="num" id="kpiPct" style="color:var(--warn)">0%</div><div class="label">At-Risk Rate</div></div>
+  </div>
+
+  <div class="charts">
+    <div class="chart-card"><h3>At-Risk Count by Region</h3><div class="chart-box" id="chartRegion"></div></div>
+    <div class="chart-card"><h3>At-Risk Count by Gender</h3><div class="chart-box" id="chartGender"></div></div>
+    <div class="chart-card"><h3>Risk Distribution</h3><div class="chart-box" id="chartPie"></div></div>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search by student ID...">
+    <select id="filterRisk">
+      <option value="all">All students</option>
+      <option value="1" selected>At-risk only</option>
+      <option value="0">Low-risk only</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table id="tbl">
+      <thead><tr id="tblHead"></tr></thead>
+      <tbody id="tblBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<footer>Generated from the trained RandomForest model &middot; predictions are not stored anywhere outside this browser session</footer>
+
+<script>
+let rows = [];
+let sortKey = 'risk_probability';
+let sortDir = -1;
+let charts = {};
+
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  Papa.parse(file, {
+    header: true,
+    dynamicTyping: true,
+    skipEmptyLines: true,
+    complete: (res) => {
+      rows = res.data.filter(r => r.id_student !== undefined && r.id_student !== null);
+      document.getElementById('uploadBox').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      renderAll();
+    }
+  });
+});
+
+function renderAll(){
+  renderKPIs();
+  renderCharts();
+  renderTable();
+}
+
+function renderKPIs(){
+  const total = rows.length;
+  const risk = rows.filter(r => Number(r.predicted_risk) === 1).length;
+  const safe = total - risk;
+  document.getElementById('kpiTotal').textContent = total.toLocaleString();
+  document.getElementById('kpiRisk').textContent = risk.toLocaleString();
+  document.getElementById('kpiSafe').textContent = safe.toLocaleString();
+  document.getElementById('kpiPct').textContent = total ? Math.round((risk/total)*100) + '%' : '0%';
+}
+
+function groupCount(field, onlyRisk=true){
+  const map = {};
+  rows.forEach(r => {
+    if (onlyRisk && Number(r.predicted_risk) !== 1) return;
+    const key = r[field] ?? 'Unknown';
+    map[key] = (map[key] || 0) + 1;
+  });
+  return map;
+}
+
+function renderCharts(){
+  const regionData = groupCount('region');
+  const genderData = groupCount('gender');
+  const total = rows.length;
+  const risk = rows.filter(r => Number(r.predicted_risk) === 1).length;
+
+  drawBarChart('chartRegion', regionData, '#dc2626');
+  drawBarChart('chartGender', genderData, '#4f46e5');
+  drawDonut('chartPie', risk, total - risk);
+}
+
+function drawBarChart(containerId, dataObj, color){
+  const el = document.getElementById(containerId);
+  const entries = Object.entries(dataObj).sort((a,b) => b[1]-a[1]).slice(0, 8);
+  const max = Math.max(1, ...entries.map(e => e[1]));
+  const W = 500, H = 220, padL = 10, padR = 10, padT = 10, padB = 60;
+  const barW = (W - padL - padR) / entries.length;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">`;
+  entries.forEach((e, i) => {
+    const [label, value] = e;
+    const barH = ((H - padT - padB) * value) / max;
+    const x = padL + i * barW + barW * 0.15;
+    const w = barW * 0.7;
+    const y = H - padB - barH;
+    svg += `<rect x="${x}" y="${y}" width="${w}" height="${barH}" rx="4" fill="${color}"></rect>`;
+    svg += `<text x="${x + w/2}" y="${y - 6}" text-anchor="middle" font-size="12" fill="currentColor">${value}</text>`;
+    const shortLabel = String(label).length > 10 ? String(label).slice(0,9) + '…' : label;
+    svg += `<text x="${x + w/2}" y="${H - padB + 16}" text-anchor="end" font-size="10" fill="currentColor" transform="rotate(-35 ${x + w/2} ${H - padB + 16})">${shortLabel}</text>`;
+  });
+  svg += `</svg>`;
+  el.innerHTML = svg;
+}
+
+function drawDonut(containerId, riskCount, safeCount){
+  const el = document.getElementById(containerId);
+  const total = riskCount + safeCount || 1;
+  const riskPct = riskCount / total;
+  const r = 70, cx = 110, cy = 110, strokeW = 28;
+  const circumference = 2 * Math.PI * r;
+  const riskLen = circumference * riskPct;
+
+  const svg = `
+    <svg viewBox="0 0 220 220" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#16a34a" stroke-width="${strokeW}"></circle>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#dc2626" stroke-width="${strokeW}"
+        stroke-dasharray="${riskLen} ${circumference}" stroke-dashoffset="0"
+        transform="rotate(-90 ${cx} ${cy})"></circle>
+      <text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="22" font-weight="700" fill="currentColor">${Math.round(riskPct*100)}%</text>
+      <text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="11" fill="currentColor" opacity="0.6">at-risk</text>
+    </svg>
+    <div style="display:flex; gap:16px; justify-content:center; margin-top:8px; font-size:12px;">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#dc2626;border-radius:2px;margin-right:4px;"></span>At-Risk (${riskCount})</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#16a34a;border-radius:2px;margin-right:4px;"></span>Low-Risk (${safeCount})</span>
+    </div>`;
+  el.innerHTML = svg;
+}
+
+const columns = ['id_student','gender','region','age_band','avg_score','active_days','total_clicks','risk_probability'];
+
+function renderTable(){
+  const head = document.getElementById('tblHead');
+  head.innerHTML = columns.map(c => `<th data-key="${c}">${c.replace(/_/g,' ')} ${sortKey===c ? (sortDir===1?'▲':'▼') : ''}</th>`).join('');
+  head.querySelectorAll('th').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      sortDir = (sortKey === key) ? -sortDir : -1;
+      sortKey = key;
+      renderTable();
+    });
+  });
+
+  const search = document.getElementById('search').value.trim();
+  const filter = document.getElementById('filterRisk').value;
+
+  let data = rows.slice();
+  if (filter !== 'all') data = data.filter(r => Number(r.predicted_risk) === Number(filter));
+  if (search) data = data.filter(r => String(r.id_student).includes(search));
+
+  data.sort((a,b) => {
+    const av = a[sortKey], bv = b[sortKey];
+    if (av === bv) return 0;
+    return (av > bv ? 1 : -1) * sortDir;
+  });
+  data = data.slice(0, 300);
+
+  const body = document.getElementById('tblBody');
+  body.innerHTML = data.map(r => `
+    <tr>
+      <td>${r.id_student}</td>
+      <td>${r.gender ?? ''}</td>
+      <td>${r.region ?? ''}</td>
+      <td>${r.age_band ?? ''}</td>
+      <td>${fmtNum(r.avg_score)}</td>
+      <td>${fmtNum(r.active_days)}</td>
+      <td>${fmtNum(r.total_clicks)}</td>
+      <td><span class="badge ${Number(r.predicted_risk)===1?'risk':'safe'}">${fmtPct(r.risk_probability)}</span></td>
+    </tr>
+  `).join('');
+}
+
+function fmtNum(v){ return (v===null||v===undefined||v==='') ? '-' : (Math.round(Number(v)*10)/10); }
+function fmtPct(v){ return v===null||v===undefined ? '-' : Math.round(Number(v)*100) + '%'; }
+
+document.getElementById('search').addEventListener('input', renderTable);
+document.getElementById('filterRisk').addEventListener('change', renderTable);
+</script>
+
+</body>
+</html>
