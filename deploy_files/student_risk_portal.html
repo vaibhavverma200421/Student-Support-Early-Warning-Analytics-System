@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Risk Mentor Portal</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--text:#1a1d23;--muted:#6b7280;--bd:#e5e7eb;--ac:#4f46e5;--red:#dc2626;--green:#16a34a;--amber:#d97706}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#181b21;--text:#e8eaed;--muted:#9aa3af;--bd:#2a2e37}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+h1{font-size:22px;margin:0 0 16px}h2{margin:8px 0}h3{font-size:14px;color:var(--muted);margin:14px 0 8px}
+.muted{color:var(--muted)}.err{color:var(--red)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px}
+input,select,textarea,button{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 10px}
+textarea{width:100%;margin:8px 0}button{cursor:pointer}button:disabled{opacity:.4;cursor:default}
+button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);text-transform:capitalize}
+#banner{display:none;position:fixed;top:0;left:0;right:0;background:var(--red);color:#fff;padding:10px;text-align:center;z-index:30}
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+#login form{width:340px;display:flex;flex-direction:column;gap:12px}
+#app{display:none;min-height:100vh}
+nav{width:210px;background:var(--card);border-right:1px solid var(--bd);padding:16px;display:flex;flex-direction:column;gap:4px}
+.brand{font-weight:700;font-size:16px;margin-bottom:12px}
+nav a{padding:9px 10px;border-radius:8px;cursor:pointer}nav a.on,nav a:hover{background:rgba(79,70,229,.12);color:var(--ac)}
+.who{margin-top:auto;font-size:12px;color:var(--muted)}
+main{flex:1;padding:22px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.kpi .n{font-size:26px;font-weight:700}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.bar{display:grid;grid-template-columns:130px 1fr 60px;gap:8px;align-items:center;margin:6px 0;font-size:12px}
+.bar div{background:var(--bd);height:10px;border-radius:5px;overflow:hidden}.bar i{display:block;height:100%}.bar b{text-align:right}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:680px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap}th{color:var(--muted)}
+tr.row{cursor:pointer}tr.row:hover{background:rgba(79,70,229,.07)}
+.badge{padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.badge.risk{background:rgba(220,38,38,.13);color:var(--red)}.badge.safe{background:rgba(22,163,74,.13);color:var(--green)}
+.pager{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--card);border-left:1px solid var(--bd);box-shadow:-8px 0 24px rgba(0,0,0,.15);padding:20px;overflow:auto;transform:translateX(105%);transition:transform .2s;z-index:20}
+#drawer.open{transform:none}.x{float:right}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.mini div{border:1px solid var(--bd);border-radius:8px;padding:8px;font-size:12px;color:var(--muted)}.mini b{display:block;font-size:18px;color:var(--text)}
+.iv{border:1px solid var(--bd);border-radius:8px;padding:10px;margin:8px 0}.iv p{margin:6px 0}
+.lnk{color:var(--ac);cursor:pointer;font-weight:600}
+@media(max-width:760px){#app{flex-direction:column}nav{width:100%;flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--bd)}.who{margin:0 0 0 auto}}
+</style>
+</head>
+<body>
+<div id="banner"></div>
+
+<div id="login">
+  <form id="loginForm" class="card">
+    <h1>Student Risk Mentor Portal</h1>
+    <p class="muted">Early-warning support for academic mentors</p>
+    <label>Mentor name<input id="lname" placeholder="e.g. Rakhi Dua"></label>
+    <label>Password<input id="lpass" type="password"></label>
+    <button class="pri">Sign in</button>
+    <p id="lerr" class="err"></p>
+    <p class="muted">Demo password: mentor123</p>
+  </form>
+</div>
+
+<div id="app">
+  <nav>
+    <div class="brand">Risk Portal</div>
+    <a data-v="dash">Dashboard</a>
+    <a data-v="students">At-risk students</a>
+    <a data-v="predict">Check a student</a>
+    <a data-v="ivs">Mentor actions</a>
+    <a data-v="impact">Impact report</a>
+    <div class="who">Signed in as <b id="who"></b><br><a id="logout">Sign out</a></div>
+  </nav>
+  <main id="main"></main>
+</div>
+<div id="drawer"></div>
+
+<script>
+const API = '';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct = v => Math.round(v * 100) + '%';
+let mentor = '';
+try { mentor = localStorage.getItem('mentor') || ''; } catch (e) {}
+
+function banner(t) { const b = $('#banner'); b.textContent = t; b.style.display = t ? 'block' : 'none'; }
+async function api(p, o) {
+  let r;
+  try { r = await fetch(API + p, o); }
+  catch (e) { banner('API not reachable. Run the server cell in run_api.ipynb, then refresh this page.'); throw e; }
+  banner('');
+  if (!r.ok) { let d = {}; try { d = await r.json(); } catch (e) {} throw new Error(typeof d.detail === 'string' ? d.detail : 'Error ' + r.status); }
+  return r.json();
+}
+const post = (p, b, m = 'POST') => api(p, { method: m, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(b) });
+window.addEventListener('unhandledrejection', e => { if (e.reason && e.reason.message && !e.reason.message.startsWith('Failed to fetch')) banner(e.reason.message); });
+
+/* ---------- login ---------- */
+$('#loginForm').onsubmit = e => {
+  e.preventDefault();
+  const n = $('#lname').value.trim();
+  if (!n || $('#lpass').value !== 'mentor123') { $('#lerr').textContent = 'Enter your name and the demo password.'; return; }
+  mentor = n; try { localStorage.setItem('mentor', n); } catch (e) {}
+  start();
+};
+function start() { $('#login').style.display = 'none'; $('#app').style.display = 'flex'; $('#who').textContent = mentor; go('dash'); }
+$('#logout').onclick = () => { try { localStorage.removeItem('mentor'); } catch (e) {} location.reload(); };
+
+/* ---------- navigation ---------- */
+const views = { dash, students, predict, ivs, impact };
+function go(v) {
+  document.querySelectorAll('nav a[data-v]').forEach(a => a.classList.toggle('on', a.dataset.v === v));
+  closeDrawer(); views[v]();
+}
+document.querySelectorAll('nav a[data-v]').forEach(a => a.onclick = () => go(a.dataset.v));
+function closeDrawer() { $('#drawer').classList.remove('open'); }
+
+/* ---------- helpers ---------- */
+const kpi = (n, l, c) => `<div class="card kpi"><div class="n" style="color:${c || 'inherit'}">${n}</div><div class="muted">${l}</div></div>`;
+function bars(list, color) {
+  const m = Math.max(1, ...list.map(x => x.at_risk));
+  return list.slice(0, 8).map(x => `<div class="bar"><span>${esc(x.label)}</span><div><i style="width:${100 * x.at_risk / m}%;background:${color}"></i></div><b>${x.at_risk.toLocaleString()}</b></div>`).join('');
+}
+const opts = (a, v) => a.map(x => `<option ${x === v ? 'selected' : ''}>${x}</option>`).join('');
+
+/* ---------- dashboard ---------- */
+async function dash() {
+  const M = $('#main'); M.innerHTML = '<h1>Dashboard</h1><p class="muted">Loading...</p>';
+  const [s, im] = await Promise.all([api('/students/summary'), api('/impact')]);
+  M.innerHTML = `<h1>Dashboard</h1>
+  <div class="kpis">${kpi(s.total.toLocaleString(), 'Total students')}${kpi(s.at_risk.toLocaleString(), 'At-risk students', 'var(--red)')}${kpi(s.low_risk.toLocaleString(), 'Low-risk students', 'var(--green)')}${kpi(s.at_risk_pct + '%', 'At-risk rate', 'var(--amber)')}${kpi(im.coverage_pct + '%', 'Flagged students reached', 'var(--ac)')}</div>
+  <div class="grid2">
+    <div class="card"><h3>At-risk by region</h3>${bars(s.by_region, 'var(--red)')}</div>
+    <div class="card"><h3>At-risk by age band</h3>${bars(s.by_age_band, 'var(--ac)')}<h3 style="margin-top:18px">At-risk by gender</h3>${bars(s.by_gender, 'var(--amber)')}</div>
+  </div>`;
+}
+
+/* ---------- at-risk students ---------- */
+let F = { search: '', region: '', gender: '', min: 0, sort: 'risk_probability:desc', offset: 0 };
+const LIM = 25;
+function qs(extra) {
+  const p = new URLSearchParams();
+  if (F.search) p.set('search', F.search);
+  if (F.region) p.set('region', F.region);
+  if (F.gender) p.set('gender', F.gender);
+  p.set('min_probability', F.min);
+  const [so, or] = F.sort.split(':'); p.set('sort', so); p.set('order', or);
+  for (const k in extra) p.set(k, extra[k]);
+  return p;
+}
+async function students() {
+  const s = await api('/students/summary');
+  $('#main').innerHTML = `<h1>At-risk students</h1><div class="card">
+  <div class="filters">
+    <input id="fs" placeholder="Search student ID" value="${esc(F.search)}">
+    <select id="fr"><option value="">All regions</option>${s.by_region.map(r => `<option ${F.region === r.label ? 'selected' : ''}>${esc(r.label)}</option>`).join('')}</select>
+    <select id="fg"><option value="">All genders</option>${opts(['M', 'F'], F.gender)}</select>
+    <select id="fm">${[0, 0.5, 0.7, 0.9].map(v => `<option value="${v}" ${F.min == v ? 'selected' : ''}>Risk at least ${pct(v)}</option>`).join('')}</select>
+    <select id="fo"><option value="risk_probability:desc">Highest risk first</option><option value="avg_score:asc" ${F.sort === 'avg_score:asc' ? 'selected' : ''}>Lowest score first</option><option value="active_days:asc" ${F.sort === 'active_days:asc' ? 'selected' : ''}>Least active first</option></select>
+    <button id="exp">Export CSV (top 500)</button>
+  </div><div id="tbl"></div></div>`;
+  const set = (id, key, num) => $(id).onchange = $(id).oninput = e => { F[key] = num ? +e.target.value : e.target.value; F.offset = 0; loadTable(); };
+  set('#fs', 'search'); set('#fr', 'region'); set('#fg', 'gender'); set('#fm', 'min', true); set('#fo', 'sort');
+  $('#exp').onclick = exportCsv;
+  loadTable();
+}
+async function loadTable() {
+  const d = await api('/students/at-risk?' + qs({ limit: LIM, offset: F.offset }));
+  $('#tbl').innerHTML = `<div class="tw"><table><thead><tr><th>ID</th><th>Gender</th><th>Region</th><th>Age</th><th>Avg score</th><th>Active days</th><th>Clicks</th><th>Risk</th><th>Mentor actions</th></tr></thead><tbody>
+  ${d.items.map(r => `<tr class="row" data-id="${r.id_student}"><td>${r.id_student}</td><td>${esc(r.gender)}</td><td>${esc(r.region)}</td><td>${esc(r.age_band)}</td><td>${r.avg_score}</td><td>${r.active_days}</td><td>${r.total_clicks}</td><td><span class="badge risk">${pct(r.risk_probability)}</span></td><td>${r.interventions || '-'}</td></tr>`).join('') || '<tr><td colspan="9">No students match.</td></tr>'}
+  </tbody></table></div>
+  <div class="pager"><span class="muted">${d.total.toLocaleString()} students, showing ${d.total ? F.offset + 1 : 0}-${Math.min(F.offset + LIM, d.total)}</span>
+  <span><button id="pv" ${F.offset ? '' : 'disabled'}>Prev</button> <button id="nx" ${F.offset + LIM < d.total ? '' : 'disabled'}>Next</button></span></div>`;
+  $('#pv').onclick = () => { F.offset = Math.max(0, F.offset - LIM); loadTable(); };
+  $('#nx').onclick = () => { F.offset += LIM; loadTable(); };
+  document.querySelectorAll('tr.row').forEach(t => t.onclick = () => openStudent(+t.dataset.id));
+}
+async function exportCsv() {
+  const d = await api('/students/at-risk?' + qs({ limit: 500, offset: 0 }));
+  const h = ['id_student', 'gender', 'region', 'age_band', 'avg_score', 'active_days', 'total_clicks', 'risk_probability'];
+  const csv = [h.join(',')].concat(d.items.map(r => h.map(k => '"' + r[k] + '"').join(','))).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'at_risk_students_export.csv'; a.click();
+}
+
+/* ---------- student detail drawer + interventions ---------- */
+const ivRow = i => `<div class="iv" data-id="${i.id}"><b>${esc(i.action_type)}</b> by ${esc(i.mentor)} <span class="muted">${i.created_at.slice(0, 10)}</span>
+<p>${esc(i.notes) || '<i class="muted">no notes</i>'}</p>
+<select class="st">${opts(['open', 'in_progress', 'resolved'], i.status)}</select> <select class="oc">${opts(['pending', 'improved', 'no_change'], i.outcome)}</select></div>`;
+function bindIv() {
+  document.querySelectorAll('.iv').forEach(el => {
+    const upd = () => post('/interventions/' + el.dataset.id, { status: el.querySelector('.st').value, outcome: el.querySelector('.oc').value }, 'PATCH')
+      .then(() => { el.style.borderColor = 'var(--green)'; setTimeout(() => el.style.borderColor = '', 900); });
+    el.querySelector('.st').onchange = upd; el.querySelector('.oc').onchange = upd;
+  });
+}
+async function openStudent(id) {
+  const d = await api('/students/' + id), s = d.student, dr = $('#drawer');
+  dr.classList.add('open');
+  dr.innerHTML = `<button class="x" id="cl">Close</button><h2>Student ${s.id_student}</h2>
+  <span class="badge ${s.predicted_risk ? 'risk' : 'safe'}">${s.predicted_risk ? 'High risk' : 'Low risk'}, ${pct(s.risk_probability)}</span>
+  <p class="muted">${esc(s.gender)} | ${esc(s.region)} | age ${esc(s.age_band)}${d.enrollments > 1 ? ' | ' + d.enrollments + ' enrollments' : ''}</p>
+  <div class="mini"><div><b>${s.avg_score}</b>Avg score</div><div><b>${s.active_days}</b>Active days</div><div><b>${s.total_clicks}</b>Clicks</div></div>
+  ${d.reasons.length ? `<h3>Why flagged</h3><ul>${d.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}
+  <h3>Log mentor action</h3>
+  <select id="at">${opts(['call', 'meeting', 'email', 'counselling', 'other'])}</select>
+  <textarea id="nt" rows="3" placeholder="Notes (keep it supportive, not punitive)"></textarea>
+  <button class="pri" id="sv">Save action</button>
+  <h3>History</h3>${d.interventions.map(ivRow).join('') || '<p class="muted">No actions logged yet.</p>'}`;
+  $('#cl').onclick = closeDrawer;
+  $('#sv').onclick = async () => { await post('/interventions', { id_student: id, mentor, action_type: $('#at').value, notes: $('#nt').value }); openStudent(id); };
+  bindIv();
+}
+async function ivs() {
+  $('#main').innerHTML = '<h1>Mentor actions</h1><div class="card"><div class="filters"><select id="sf"><option value="">All statuses</option><option>open</option><option>in_progress</option><option>resolved</option></select></div><div id="il"></div></div>';
+  const load = async () => {
+    const s = $('#sf').value, l = await api('/interventions' + (s ? '?status=' + s : ''));
+    $('#il').innerHTML = l.map(i => ivRow(i).replace('<b>', `<a class="lnk" data-s="${i.id_student}">Student ${i.id_student}</a> | <b>`)).join('') || '<p class="muted">No actions yet. Open a student and log one.</p>';
+    bindIv();
+    document.querySelectorAll('.lnk').forEach(a => a.onclick = () => openStudent(+a.dataset.s));
+  };
+  $('#sf').onchange = load; load();
+}
+
+/* ---------- predict ---------- */
+const OPT = {
+  gender: ['M', 'F'],
+  region: ['East Anglian Region', 'East Midlands Region', 'Ireland', 'London Region', 'North Region', 'North Western Region', 'Scotland', 'South East Region', 'South Region', 'South West Region', 'Wales', 'West Midlands Region', 'Yorkshire Region'],
+  highest_education: ['No Formal quals', 'Lower Than A Level', 'A Level or Equivalent', 'HE Qualification', 'Post Graduate Qualification'],
+  imd_band: ['0-10%', '10-20', '20-30%', '30-40%', '40-50%', '50-60%', '60-70%', '70-80%', '80-90%', '90-100%', 'Unknown'],
+  age_band: ['0-35', '35-55', '55<='],
+  disability: ['N', 'Y']
+};
+const NUM = { num_of_prev_attempts: 0, studied_credits: 60, module_presentation_length: 240, total_clicks: 500, active_days: 30, avg_score: 60, total_assessments: 3 };
+function predict() {
+  $('#main').innerHTML = `<h1>Check a student</h1><div class="card"><form id="pf" class="form">
+  ${Object.keys(OPT).map(k => `<label>${k.replace(/_/g, ' ')}<select name="${k}">${OPT[k].map(o => `<option>${esc(o)}</option>`).join('')}</select></label>`).join('')}
+  ${Object.keys(NUM).map(k => `<label>${k.replace(/_/g, ' ')}<input type="number" step="any" min="0" name="${k}" value="${NUM[k]}"></label>`).join('')}
+  <button class="pri" type="submit">Predict risk</button></form></div><div id="pres"></div>`;
+  $('#pf').onsubmit = async e => {
+    e.preventDefault();
+    const b = {}; new FormData(e.target).forEach((v, k) => b[k] = k in OPT ? v : Number(v));
+    const r = await post('/predict', b);
+    $('#pres').innerHTML = `<div class="card" style="margin-top:14px;border-left:4px solid ${r.at_risk ? 'var(--red)' : 'var(--green)'}"><h2>${esc(r.message)}</h2><p>Risk probability: <b>${pct(r.risk_probability)}</b></p>${r.reasons.length ? '<ul>' + r.reasons.map(x => `<li>${esc(x)}</li>`).join('') + '</ul>' : ''}</div>`;
+  };
+}
+
+/* ---------- impact ---------- */
+async function impact() {
+  const d = await api('/impact');
+  const rows = o => Object.entries(o).map(([k, v]) => `<div class="bar"><span>${k.replace('_', ' ')}</span><div><i style="width:${100 * v / Math.max(1, ...Object.values(o))}%;background:var(--ac)"></i></div><b>${v}</b></div>`).join('') || '<p class="muted">No data yet.</p>';
+  $('#main').innerHTML = `<h1>Impact report</h1>
+  <div class="kpis">${kpi(d.flagged_students.toLocaleString(), 'Flagged students')}${kpi(d.students_reached, 'Students reached', 'var(--ac)')}${kpi(d.coverage_pct + '%', 'Coverage', 'var(--amber)')}${kpi(d.improvement_rate_pct == null ? 'n/a' : d.improvement_rate_pct + '%', 'Improvement rate', 'var(--green)')}</div>
+  <div class="grid2"><div class="card"><h3>Actions by status</h3>${rows(d.by_status)}</div><div class="card"><h3>Actions by outcome</h3>${rows(d.by_outcome)}</div></div>
+  <p class="muted">${esc(d.note)}</p>`;
+}
+
+if (mentor) start();
+</script>
+</body>
+</html>
